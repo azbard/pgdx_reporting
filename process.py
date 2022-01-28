@@ -249,9 +249,9 @@ def pgdx_process(batch_dir, req_dir, mode="print"):
     #     )
 
     log_file.close()
-    complete_reported_file = os.path.join(batch_dir, "COMPLETE-REPORTED")                                                                                 ─╯
-    with open(complete_reported_file, "w") as fp: 
-        pass  
+    complete_reported_file = os.path.join(batch_dir, "COMPLETE-REPORTED")
+    with open(complete_reported_file, "w") as fp:
+        pass
 
 
 # %%
