@@ -312,8 +312,8 @@ def write_report(
     msg = log("Starting report: " + case + " - " + report_datetime, log_file,)
     if mode == "print":
         print(msg)
-    elif mode == "yield":
-        yield msg
+    # elif mode == "yield":
+    #     yield msg
 
     # Check Version Compatibility
     version = (
@@ -362,8 +362,8 @@ def write_report(
         msg = log("Starting html report: " + case + " - " + report_datetime, log_file,)
         if mode == "print":
             print(msg)
-        elif mode == "yield":
-            yield msg
+        # elif mode == "yield":
+        #     yield msg
 
         html_filename = case + " - PGDx Review - " + report_datetime + ".htm"
 
@@ -470,8 +470,8 @@ def write_report(
         msg = log("Starting igv report: " + case + " - " + report_datetime, log_file,)
         if mode == "print":
             print(msg)
-        elif mode == "yield":
-            yield msg
+        # elif mode == "yield":
+        #     yield msg
 
         # get BAM
         stub_pat = re.compile(f"{case}.*\.bam$")
@@ -491,7 +491,7 @@ def write_report(
         html = os.path.join(pathologist_dir, html_filename)
         output_path = os.path.join(igv_dir, igv_filename)
 
-        make_igvreport(ttype, bam, bed1, bed2, hg19_fasta, html, output_path)
+        # make_igvreport(ttype, bam, bed1, bed2, hg19_fasta, html, output_path)
 
     else:
         report_str = (
@@ -508,8 +508,41 @@ def write_report(
     msg = log(f"Reporting {case} - {report_datetime} complete", log_file)
     if mode == "print":
         print(msg)
-    elif mode == "yield":
-        yield msg
+    # elif mode == "yield":
+    #     yield msg
+
+
+def fail(
+    report_dict, wiki_dir, log_file, mode="print",
+):
+    """
+    Produces a failed report file in wiki_directory based on report_dict
+    """
+    # create a new file named by NA number date and time
+    report_datetime = time.strftime("%Y%m%d-%H%M%S", time.localtime())
+
+    case = report_dict["Case Summary"].set_index("Metric").at["Case Name", "Value"]
+
+    # create report file
+    file = open(
+        os.path.join(wiki_dir, case + " - PGDx Report - " + report_datetime + ".txt"),
+        "wb",
+    )
+
+    report_str = (
+        "<p><b>RESULTS:</b><br>Targeted next-generation sequencing failed.</p>"
+        "<p><b>INTERPRETATION:</b><br>There was insufficient tumor tissue/nucleic"
+        " acid quality or quantity for analysis.</p>"
+        "<p><b>COMMENT:</b><br>Please submit a request for testing"
+        " on another specimen if clinically indicated.</p>"
+    )
+
+    file.write(report_str.encode(encoding="utf-8", errors="replace"))
+    file.close()
+
+    msg = log(f"Reporting {case} - {report_datetime} complete - CASE FAILED", log_file)
+    if mode == "print":
+        print(msg)
 
 
 # %%

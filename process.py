@@ -1,6 +1,7 @@
+# %%
 import os
 
-
+# %%
 def progress(count, total, status=""):
     """
     A simple progress bar generator
@@ -16,6 +17,7 @@ def progress(count, total, status=""):
     return f"[{bar}] {percents}% ... {status}\r"
 
 
+# %%
 def pgdx_process(batch_dir, req_dir, mode="print"):
 
     input_directory = os.path.join(batch_dir, "Reports")
@@ -45,27 +47,27 @@ def pgdx_process(batch_dir, req_dir, mode="print"):
     i += 1
     if mode == "print":
         print(progress(i, total, status="Importing Dependencies"))
-    elif mode == "yield":
-        yield progress(i, total, status="Importing Dependencies")
+    # elif mode == "yield":
+    #     yield progress(i, total, status="Importing Dependencies")
     import pandas as pd
     import time
 
     i += 1
     if mode == "print":
         print(progress(i, total, status="Importing Custom Code "))
-    elif mode == "yield":
-        yield progress(i, total, status="Importing Custom Code ")
-    from . import reading
+    # elif mode == "yield":
+    #     yield progress(i, total, status="Importing Custom Code ")
+    from pgdx_reporting import reading
 
     i += 1
     if mode == "print":
         print(progress(i, total, status="Importing Custom Code "))
-    elif mode == "yield":
-        yield progress(i, total, status="Importing Custom Code ")
-    from . import writing
-    from . import UploadToSql
+    # elif mode == "yield":
+    #     yield progress(i, total, status="Importing Custom Code ")
+    from pgdx_reporting import writing
+    from pgdx_reporting import UploadToSql
 
-    # %%
+    #
     # Initialize Directories
     # Plan is to run in the network root
     # then define the batch folder and add adresses from there.
@@ -73,8 +75,8 @@ def pgdx_process(batch_dir, req_dir, mode="print"):
     i += 1
     if mode == "print":
         print(progress(i, total, status="Setup Complete        \n"))
-    elif mode == "yield":
-        yield progress(i, total, status="Setup Complete        \n")
+    # elif mode == "yield":
+    #     yield progress(i, total, status="Setup Complete        \n")
     # if any required directories don't exist then create them
     new_dirs = [wiki_dir, pathologist_dir, igv_dir]
 
@@ -82,7 +84,6 @@ def pgdx_process(batch_dir, req_dir, mode="print"):
         if not os.path.exists(new_dir):
             os.mkdir(new_dir)
 
-    # %%
     # Import Data Requirements
 
     # List of compatible versions [Assay Name, Assay Version, Platform Version ]
@@ -144,76 +145,88 @@ def pgdx_process(batch_dir, req_dir, mode="print"):
             )
             if mode == "print":
                 print(writing.log(opening_msg, log_file,))
-            elif mode == "yield":
-                yield writing.log(
-                    opening_msg, log_file,
-                )
+            # elif mode == "yield":
+            #     yield writing.log(
+            #         opening_msg, log_file,
+            #     )
 
             fullpath = os.path.join(input_directory, filename)
 
             #     Read in data from the file
             report_dict = reading.parse_csv(fullpath)
 
-            interpreted_report_dict = reading.interp(
-                report_dict, fda, batch_dir, ExonDF, filename
-            )
-            #     Write the report to the report directory
-            writing.write_report(
-                report_dict,
-                interpreted_report_dict,
-                fda,
-                compatible_versions,
-                wiki_dir,
-                pathologist_dir,
-                batch_dir,
-                igv_dir,
-                req_dir,
-                filename,
-                log_file,
-                ExonDF,
-                mode,
-            )
-            success_counter += 1
+            summary_df = report_dict["Case Summary"]
+            filt = summary_df["Metric"] == "Overall Case Pass/Fail"
 
-            progress_msg = (
-                f"\SQL Upload {filename} -"
-                f'{time.strftime("%Y%m%d-%H%M%S", time.localtime())}'
-            )
+            if (summary_df.loc[filt, "Value"] == "PASS").all():
 
-            if mode == "print":
-                print(writing.log(progress_msg, log_file,))
-            elif mode == "yield":
-                yield writing.log(
-                    progress_msg, log_file,
+                interpreted_report_dict = reading.interp(
+                    report_dict, fda, batch_dir, ExonDF, filename
+                )
+                #     Write the report to the report directory
+                writing.write_report(
+                    report_dict,
+                    interpreted_report_dict,
+                    fda,
+                    compatible_versions,
+                    wiki_dir,
+                    pathologist_dir,
+                    batch_dir,
+                    igv_dir,
+                    req_dir,
+                    filename,
+                    log_file,
+                    ExonDF,
+                    mode,
                 )
 
-            case = (
-                report_dict["Case Summary"].set_index("Metric").at["Case Name", "Value"]
-            )
+                success_counter += 1
 
-            # TODO Creates the dictionary with all of the dataframes to ouput
-            tableDicOut = UploadToSql.tableCreation(
-                interpreted_report_dict[3],
-                fullpath,
-                os.path.join(
-                    batch_dir, "TextFiles", case + ".translocation_ETC-RUO.csv"
-                ),
-                os.path.join(
-                    batch_dir, "TextFiles", case + ".rawfoldchange_ETC-RUO.csv"
-                ),
-                os.path.join(
-                    batch_dir, "TextFiles", case + ".samplehotspots_ETC-RUO.csv"
-                ),
-                os.path.join(req_dir, "FDA_comment.xlsx"),
-                mode,
-            )
+                progress_msg = (
+                    f"\SQL Upload {filename} -"
+                    f'{time.strftime("%Y%m%d-%H%M%S", time.localtime())}'
+                )
 
-            # Write the output tables into created folder as .csv
-            UploadToSql.writeOutputTables(fullpath, tableDicOut)
-            # uploads the csv to sql
-            UploadToSql.uploadToSql(
-                tableDicOut, os.path.join(req_dir, "FDA_comment.xlsx"), mode
-            )
+                if mode == "print":
+                    print(writing.log(progress_msg, log_file,))
+                # elif mode == "yield":
+                #     yield writing.log(
+                #         progress_msg, log_file,
+                #     )
+
+                case = (
+                    report_dict["Case Summary"]
+                    .set_index("Metric")
+                    .at["Case Name", "Value"]
+                )
+
+                tableDicOut = UploadToSql.tableCreation(
+                    interpreted_report_dict[3],
+                    fullpath,
+                    os.path.join(
+                        batch_dir, "TextFiles", case + ".translocation_ETC-RUO.csv"
+                    ),
+                    os.path.join(
+                        batch_dir, "TextFiles", case + ".rawfoldchange_ETC-RUO.csv"
+                    ),
+                    os.path.join(
+                        batch_dir, "TextFiles", case + ".samplehotspots_ETC-RUO.csv"
+                    ),
+                    os.path.join(req_dir, "FDA_comment.xlsx"),
+                    mode,
+                )
+
+                # Write the output tables into created folder as .csv
+                UploadToSql.writeOutputTables(fullpath, tableDicOut)
+                # uploads the csv to sql
+                UploadToSql.uploadToSql(
+                    tableDicOut, os.path.join(req_dir, "FDA_comment.xlsx"), mode
+                )
+            else:
+                writing.fail(
+                    report_dict, wiki_dir, log_file, mode="print",
+                )
+                success_counter += 1
 
         except OSError as err:
             msg = "************ OS error: {0} ************".format(err)
@@ -230,14 +243,18 @@ def pgdx_process(batch_dir, req_dir, mode="print"):
 
     if mode == "print":
         print(writing.log(final_final_msg, log_file,))
-    elif mode == "yield":
-        yield writing.log(
-            final_final_msg, log_file,
-        )
+    # elif mode == "yield":
+    #     yield writing.log(
+    #         final_final_msg, log_file,
+    #     )
 
     log_file.close()
+    complete_reported_file = os.path.join(batch_dir, "COMPLETE-REPORTED")                                                                                 ─╯
+    with open(complete_reported_file, "w") as fp: 
+        pass  
 
 
+# %%
 def pgdx_main(batch_dir, req_dir):
     complete_file = os.path.join(batch_dir, "COMPLETE")
     complete_reported_file = os.path.join(batch_dir, "COMPLETE-REPORTED")
@@ -255,3 +272,10 @@ def pgdx_main(batch_dir, req_dir):
             except:
                 print("processing failed")
                 # email me
+
+
+if __name__ == "__main__":
+    pgdx_process(
+        "/mnt/pgdx_v1/ElioConnect_Output/B21-1146_ETCR-SPF-66845",
+        "/mnt/pgdx_v1/.Bioinformatics/requirements",
+    )

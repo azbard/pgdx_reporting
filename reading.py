@@ -132,21 +132,25 @@ def TMB_MSI(report_dict):
     Takes parsed csv and produces dictionary
     of TMB and MSI results e.g. {'TMB': '4.6', 'MSI': 'MSS'}
     """
-    sample_sigs_df = report_dict["Sample Genomic Signatures"].set_index("Signature")
+    if "Sample Genomic Signatures" in report_dict.keys():
+        sample_sigs_df = report_dict["Sample Genomic Signatures"].set_index("Signature")
 
-    output_dict = dict()
+        output_dict = dict()
 
-    # Different versions of the assay/platform have different
-    # names for TMB so try to find the most complex first
-    try:
-        output_dict["TMB"] = sample_sigs_df.at[
-            "TMB Muts/Mb (Sequenced)", "Status/Score"
+        # Different versions of the assay/platform have different
+        # names for TMB so try to find the most complex first
+        try:
+            output_dict["TMB"] = sample_sigs_df.at[
+                "TMB Muts/Mb (Sequenced)", "Status/Score"
+            ]
+        except:
+            output_dict["TMB"] = sample_sigs_df.at["TMB Muts/Mb", "Status/Score"]
+
+        output_dict["MSI"] = sample_sigs_df.at[
+            "Microsatellite Analysis", "Status/Score"
         ]
-    except:
-        output_dict["TMB"] = sample_sigs_df.at["TMB Muts/Mb", "Status/Score"]
-
-    output_dict["MSI"] = sample_sigs_df.at["Microsatellite Analysis", "Status/Score"]
-
+    else:
+        output_dict = {"TMB": None, "MSI": None}
     return output_dict
 
 
@@ -430,10 +434,11 @@ def interp(report_dict, fda, batch_dir, ExonDF, filename):
         "Sample Amplification Analysis",
         "Sample Translocation Analysis",
     ]:
-        tiered_dict[tbl] = tiered_dict[tbl][0:0]
-        len_cols = len(tiered_dict[tbl].columns)
-        tiered_dict[tbl].insert(len_cols, "tier", [])
-        tiered_dict[tbl].insert(len_cols + 1, "tiered_var_id", [])
+        if tbl in tiered_dict.keys():
+            tiered_dict[tbl] = tiered_dict[tbl][0:0]
+            len_cols = len(tiered_dict[tbl].columns)
+            tiered_dict[tbl].insert(len_cols, "tier", [])
+            tiered_dict[tbl].insert(len_cols + 1, "tiered_var_id", [])
 
     # Get MSI results add to findings if MSI
 

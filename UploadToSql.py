@@ -8,7 +8,7 @@ import warnings
 import numpy
 from psycopg2.extensions import register_adapter, AsIs
 
-from reading import interp
+from pgdx_reporting.reading import interp
 
 # These lines necessary for data translation
 # between pandas and postgresql
@@ -333,8 +333,8 @@ def tableCreation(
                 msg = "Amp table may be empty!"
                 if mode == "print":
                     print(msg)
-                elif mode == "yield":
-                    yield msg
+                # elif mode == "yield":
+                #     yield msg
             # status is a defined word in sql so had to be renamed
             cnvTable.rename(
                 {"Status": "alteration_status"}, axis="columns", inplace=True
@@ -467,9 +467,8 @@ def connectToDatabase(mode="print"):
         msg = "Connecting to the PostgreSQL database..."
         if mode == "print":
             print(msg)
-        elif mode == "yield":
-            yield msg
-        # yield "Connecting to the PostgreSQL database..."
+        # elif mode == "yield":
+        #     yield msg
         engine = create_engine(
             "postgresql://sv739:cpath%40mgh@172.27.81.127:31644/cider"
         )
@@ -478,19 +477,17 @@ def connectToDatabase(mode="print"):
         msg = error
         if mode == "print":
             print(msg)
-        elif mode == "yield":
-            yield msg
+        # elif mode == "yield":
+        #     yield msg
 
-        # yield error
         sys.exit(1)
 
     msg = "Connection successful"
     if mode == "print":
         print(msg)
-    elif mode == "yield":
-        yield msg
+    # elif mode == "yield":
+    #     yield msg
 
-    # yield "Connection successful"
     return engine
 
 
@@ -506,12 +503,13 @@ def uploadToSql(tableDicOut, pgdx_fda_comment_path, mode="print"):
             checkFDA(
                 tableDicOut["pgdx_batch"], pgdx_fda_comment_path, engine,
             )
-        if filetype == "pgdx_translocations":
-            msg = tableDicOut[filetype]
-            if mode == "print":
-                print(msg)
-            elif mode == "yield":
-                yield msg
+
+        # if filetype == "pgdx_translocations":
+        #     msg = tableDicOut[filetype]
+        #     if mode == "print":
+        #         print(msg)
+        # elif mode == "yield":
+        #     yield msg
 
         try:
             if not tableDicOut[filetype].empty:
@@ -530,37 +528,36 @@ def uploadToSql(tableDicOut, pgdx_fda_comment_path, mode="print"):
                     msg = filetype + " successfully uploaded to sql"
                     if mode == "print":
                         print(msg)
-                    elif mode == "yield":
-                        yield msg
+                    # elif mode == "yield":
+                    #     yield msg
 
-                    # yield filetype + " successfully uploaded to sql"
             else:
                 msg = filetype + " empty - not uploaded to sql"
                 if mode == "print":
                     print(msg)
-                elif mode == "yield":
-                    yield msg
+                # elif mode == "yield":
+                #     yield msg
 
         except (Exception, sqlalchemy.exc.DBAPIError) as error:
             msg = filetype + " failed to upload to sql"
             if mode == "print":
                 print(msg)
-            elif mode == "yield":
-                yield msg
+            # elif mode == "yield":
+            #     yield msg
 
             if "duplicate key value violates unique constraint" in str(error):
                 msg = "Already Uploaded!"
                 if mode == "print":
                     print(msg)
-                elif mode == "yield":
-                    yield msg
+                # elif mode == "yield":
+                #     yield msg
 
             else:
                 msg = error
                 if mode == "print":
                     print(msg)
-                elif mode == "yield":
-                    yield msg
+                # elif mode == "yield":
+                #     yield msg
 
 
 # Checks to see if the fda table is up to date in sql and updates if not
@@ -595,33 +592,27 @@ def checkFDA(df, pgdx_fda_comment_path, engine, mode="print"):
             msg = "Upload of FDA comment table failed"
             if mode == "print":
                 print(msg)
-            elif mode == "yield":
-                yield msg
+            # elif mode == "yield":
+            #     yield msg
 
-            # yield "Upload of FDA comment table failed"
             msg = error
             if mode == "print":
                 print(msg)
-            elif mode == "yield":
-                yield msg
-
-            # yield error
+            # elif mode == "yield":
+            #     yield msg
 
         msg = "FDA comment table uploaded successfully"
         if mode == "print":
             print(msg)
-        elif mode == "yield":
-            yield msg
+        # elif mode == "yield":
+        #     yield msg
 
-        # yield "FDA comment table uploaded successfully"
     else:
         msg = "FDA version up to date"
         if mode == "print":
             print(msg)
-        elif mode == "yield":
-            yield msg
-
-        # yield "FDA version up to date"
+        # elif mode == "yield":
+        #     yield msg
 
 
 if __name__ == "__main__":
