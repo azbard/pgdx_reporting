@@ -183,7 +183,7 @@ def pgdx_process(batch_dir, req_dir, mode="print"):
                 success_counter += 1
 
                 progress_msg = (
-                    f"\SQL Upload {filename} -"
+                    f"SQL Upload {filename} -"
                     f'{time.strftime("%Y%m%d-%H%M%S", time.localtime())}'
                 )
 
