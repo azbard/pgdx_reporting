@@ -383,7 +383,7 @@ def tableCreation(
     batchTable.drop(["cid_number", "na", "total"], axis=1, inplace=True)
 
     # Reads in the most up to date FDA comment version and adds it to the batch table
-    pgdx_fda_commentDF = pd.read_excel(pgdx_fda_comment_path)
+    pgdx_fda_commentDF = pd.read_excel(pgdx_fda_comment_path, engine="openpyxl")
     batchTable["fda_comment_version"] = pgdx_fda_commentDF["version"].max()
 
     # Repeats for sample table
@@ -572,7 +572,7 @@ def checkFDA(df, pgdx_fda_comment_path, engine, mode="print"):
     if not fda_comment_table_version.first()[0] == df["fda_comment_version"][0]:
 
         # if not matches will transform
-        pgdx_fda_commentDF = pd.read_excel(pgdx_fda_comment_path)
+        pgdx_fda_commentDF = pd.read_excel(pgdx_fda_comment_path, engine="openpyxl")
 
         try:
             # Uses the connection previously created
