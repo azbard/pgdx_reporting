@@ -409,22 +409,15 @@ def writeOutputTables(reportPath, tableDicOut, output_dir):
     # Generates the CID, NA, Batch as variables to use in naming
     CID, NA, Batch = caseInfo(reportPath)
 
-    newFolderPath = output_dir
-
-    # Checks to see if the folder to momentarily place all of the files
-    # If it doesn't exist, it makes a folder called 'sqlUpload'
-    if not os.path.exists(newFolderPath):
-        os.makedirs(newFolderPath)
-
     # Generates the filename and path for the batch
-    batchFilename = os.path.join(newFolderPath + Batch + "_batchTableUpload.csv")
+    batchFilename = os.path.join(output_dir, Batch + "_batchTableUpload.csv")
 
     # loops through dictionary of output tables
     for key in tableDicOut:
 
         # Creates a path and filename for each sample and its output table
         sampleFilename = os.path.join(
-            newFolderPath + CID + "_" + NA + "_" + Batch + "_" + key + "_Upload.csv"
+            output_dir, CID + "_" + NA + "_" + Batch + "_" + key + "_Upload.csv"
         )
 
         # For batches it checks if it exists
