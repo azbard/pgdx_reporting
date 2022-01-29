@@ -630,7 +630,7 @@ if __name__ == "__main__":
     ExonDF = createExonTable(os.path.join(req_dir, "refGene-CDS_HG19"))
     filename = "CID21-13393_NA21-5481_B22-4.CCR_ETC-RUO.csv"
     reportPath = os.path.join(batch_dir, "Reports", filename)
-    csv_dir = os.path.join(os.path.basename(os.path.abspath(req_dir), "sqlUpload"))
+    csv_dir = os.path.join(os.path.basename(os.path.abspath(req_dir)), "sqlUpload"))
 
     tranlocationPath = os.path.join(
         batch_dir, "TextFiles", "CID21-13393_NA21-5481_B22-4.translocation_ETC-RUO.csv"
