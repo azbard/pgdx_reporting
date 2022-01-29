@@ -98,7 +98,7 @@ def latest_batch_directory(parent_dir=None):
 
                 # otherwise just check if batch number
                 # is higher
-                elif batch > highest_batch:
+                elif (year == highest_year) and (batch > highest_batch):
                     highest_batch = batch
                     candidate = dir
 
@@ -148,3 +148,21 @@ def get_dir_from_batch(par_dir, batch_dict):
                     break
 
     return candidate
+
+
+def check_batch_already_run(batch_dir):
+    """
+    Checks if processing already complete.
+    """
+
+    igv_dir = os.path.join(batch_dir, "IGV")
+    pathologist_dir = os.path.join(batch_dir, "All_Pathologist")
+    wiki_dir = os.path.join(batch_dir, "Wiki")
+
+    new_dirs = [wiki_dir, pathologist_dir, igv_dir]
+
+    for dir in new_dirs:
+        if os.path.exists(dir):
+            return True
+
+    return False
