@@ -24,7 +24,7 @@ def pgdx_process(batch_dir, req_dir, mode="print"):
     igv_dir = os.path.join(batch_dir, "IGV")
     pathologist_dir = os.path.join(batch_dir, "All_Pathologist")
     wiki_dir = os.path.join(batch_dir, "Wiki")
-    csv_dir = os.path.join(os.path.pardir(req_dir), "sqlUpload")
+    csv_dir = os.path.join(os.path.basename(os.path.abspath(req_dir), "sqlUpload"))
 
     HappyHippo = (
         "\n"
