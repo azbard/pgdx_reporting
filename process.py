@@ -138,101 +138,99 @@ def pgdx_process(batch_dir, req_dir, mode="print"):
 
         counter += 1
 
-        try:
-            opening_msg = (
-                f'\n{time.strftime("%Y%m%d-%H%M%S", time.localtime())}'
-                f" - {str(counter)}/{str(n_files)}"
-                f"\nOpening File: {filename}"
+        # try:
+        opening_msg = (
+            f'\n{time.strftime("%Y%m%d-%H%M%S", time.localtime())}'
+            f" - {str(counter)}/{str(n_files)}"
+            f"\nOpening File: {filename}"
+        )
+        if mode == "print":
+            print(writing.log(opening_msg, log_file,))
+        # elif mode == "yield":
+        #     yield writing.log(
+        #         opening_msg, log_file,
+        #     )
+
+        fullpath = os.path.join(input_directory, filename)
+
+        #     Read in data from the file
+        report_dict = reading.parse_csv(fullpath)
+
+        summary_df = report_dict["Case Summary"]
+        filt = summary_df["Metric"] == "Overall Case Pass/Fail"
+
+        if (summary_df.loc[filt, "Value"] == "PASS").all():
+
+            interpreted_report_dict = reading.interp(
+                report_dict, fda, batch_dir, ExonDF, filename
             )
+            #     Write the report to the report directory
+            writing.write_report(
+                report_dict,
+                interpreted_report_dict,
+                fda,
+                compatible_versions,
+                wiki_dir,
+                pathologist_dir,
+                batch_dir,
+                igv_dir,
+                req_dir,
+                filename,
+                log_file,
+                ExonDF,
+                mode,
+            )
+
+            success_counter += 1
+
+            progress_msg = (
+                f"SQL Upload {filename} -"
+                f'{time.strftime("%Y%m%d-%H%M%S", time.localtime())}'
+            )
+
             if mode == "print":
-                print(writing.log(opening_msg, log_file,))
+                print(writing.log(progress_msg, log_file,))
             # elif mode == "yield":
             #     yield writing.log(
-            #         opening_msg, log_file,
+            #         progress_msg, log_file,
             #     )
 
-            fullpath = os.path.join(input_directory, filename)
+            case = (
+                report_dict["Case Summary"].set_index("Metric").at["Case Name", "Value"]
+            )
 
-            #     Read in data from the file
-            report_dict = reading.parse_csv(fullpath)
+            tableDicOut = UploadToSql.tableCreation(
+                interpreted_report_dict[3],
+                fullpath,
+                os.path.join(
+                    batch_dir, "TextFiles", case + ".translocation_ETC-RUO.csv"
+                ),
+                os.path.join(
+                    batch_dir, "TextFiles", case + ".rawfoldchange_ETC-RUO.csv"
+                ),
+                os.path.join(
+                    batch_dir, "TextFiles", case + ".samplehotspots_ETC-RUO.csv"
+                ),
+                os.path.join(req_dir, "FDA_comment.xlsx"),
+                mode,
+            )
 
-            summary_df = report_dict["Case Summary"]
-            filt = summary_df["Metric"] == "Overall Case Pass/Fail"
+            # Write the output tables into created folder as .csv
+            UploadToSql.writeOutputTables(fullpath, tableDicOut, csv_dir)
+            # uploads the csv to sql
+            UploadToSql.uploadToSql(
+                tableDicOut, os.path.join(req_dir, "FDA_comment.xlsx"), mode
+            )
+        else:
+            writing.fail(
+                report_dict, wiki_dir, log_file, mode="print",
+            )
+            success_counter += 1
 
-            if (summary_df.loc[filt, "Value"] == "PASS").all():
-
-                interpreted_report_dict = reading.interp(
-                    report_dict, fda, batch_dir, ExonDF, filename
-                )
-                #     Write the report to the report directory
-                writing.write_report(
-                    report_dict,
-                    interpreted_report_dict,
-                    fda,
-                    compatible_versions,
-                    wiki_dir,
-                    pathologist_dir,
-                    batch_dir,
-                    igv_dir,
-                    req_dir,
-                    filename,
-                    log_file,
-                    ExonDF,
-                    mode,
-                )
-
-                success_counter += 1
-
-                progress_msg = (
-                    f"SQL Upload {filename} -"
-                    f'{time.strftime("%Y%m%d-%H%M%S", time.localtime())}'
-                )
-
-                if mode == "print":
-                    print(writing.log(progress_msg, log_file,))
-                # elif mode == "yield":
-                #     yield writing.log(
-                #         progress_msg, log_file,
-                #     )
-
-                case = (
-                    report_dict["Case Summary"]
-                    .set_index("Metric")
-                    .at["Case Name", "Value"]
-                )
-
-                tableDicOut = UploadToSql.tableCreation(
-                    interpreted_report_dict[3],
-                    fullpath,
-                    os.path.join(
-                        batch_dir, "TextFiles", case + ".translocation_ETC-RUO.csv"
-                    ),
-                    os.path.join(
-                        batch_dir, "TextFiles", case + ".rawfoldchange_ETC-RUO.csv"
-                    ),
-                    os.path.join(
-                        batch_dir, "TextFiles", case + ".samplehotspots_ETC-RUO.csv"
-                    ),
-                    os.path.join(req_dir, "FDA_comment.xlsx"),
-                    mode,
-                )
-
-                # Write the output tables into created folder as .csv
-                UploadToSql.writeOutputTables(fullpath, tableDicOut, csv_dir)
-                # uploads the csv to sql
-                UploadToSql.uploadToSql(
-                    tableDicOut, os.path.join(req_dir, "FDA_comment.xlsx"), mode
-                )
-            else:
-                writing.fail(
-                    report_dict, wiki_dir, log_file, mode="print",
-                )
-                success_counter += 1
-
-        except OSError as err:
-            msg = "************ OS error: {0} ************".format(err)
-            writing.log(msg, log_file)
-            problem_files += filename + "\n" + msg + "\n\n"
+        # except OSError as err:
+        #     msg = "************ OS error: {0} ************".format(err)
+        #     writing.log(msg, log_file)
+        #     problem_files += filename + "\n" + msg + "\n\n"
 
     final_msg = "" if len(problem_files) == 0 else "Problem files:\n\n" + problem_files
 
