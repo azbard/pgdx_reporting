@@ -24,6 +24,7 @@ def pgdx_process(batch_dir, req_dir, mode="print"):
     igv_dir = os.path.join(batch_dir, "IGV")
     pathologist_dir = os.path.join(batch_dir, "All_Pathologist")
     wiki_dir = os.path.join(batch_dir, "Wiki")
+    csv_dir = os.path.join(os.path.pardir(req_dir), "sqlUpload")
 
     HappyHippo = (
         "\n"
@@ -217,7 +218,7 @@ def pgdx_process(batch_dir, req_dir, mode="print"):
                 )
 
                 # Write the output tables into created folder as .csv
-                UploadToSql.writeOutputTables(fullpath, tableDicOut)
+                UploadToSql.writeOutputTables(fullpath, tableDicOut, csv_dir)
                 # uploads the csv to sql
                 UploadToSql.uploadToSql(
                     tableDicOut, os.path.join(req_dir, "FDA_comment.xlsx"), mode

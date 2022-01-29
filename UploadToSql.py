@@ -404,12 +404,12 @@ def tableCreation(
 
 
 # This function writes out the tables
-def writeOutputTables(reportPath, tableDicOut):
+def writeOutputTables(reportPath, tableDicOut, output_dir):
 
     # Generates the CID, NA, Batch as variables to use in naming
     CID, NA, Batch = caseInfo(reportPath)
 
-    newFolderPath = os.path.join(os.getcwd() + "/sqlUpload/")
+    newFolderPath = output_dir
 
     # Checks to see if the folder to momentarily place all of the files
     # If it doesn't exist, it makes a folder called 'sqlUpload'
@@ -630,6 +630,7 @@ if __name__ == "__main__":
     ExonDF = createExonTable(os.path.join(req_dir, "refGene-CDS_HG19"))
     filename = "CID21-13393_NA21-5481_B22-4.CCR_ETC-RUO.csv"
     reportPath = os.path.join(batch_dir, "Reports", filename)
+    csv_dir = os.path.join(os.path.pardir(req_dir), "sqlUpload")
 
     tranlocationPath = os.path.join(
         batch_dir, "TextFiles", "CID21-13393_NA21-5481_B22-4.translocation_ETC-RUO.csv"
@@ -657,7 +658,7 @@ if __name__ == "__main__":
     )
 
     # Write the output tables into created folder as .csv
-    writeOutputTables(reportPath, tableDicOut)
+    writeOutputTables(reportPath, tableDicOut, csv_dir)
 
     # uploads the csv to sql
     uploadToSql(tableDicOut, fda_comment_path)
