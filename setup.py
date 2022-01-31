@@ -166,3 +166,27 @@ def check_batch_already_run(batch_dir):
             return True
 
     return False
+
+
+def check_batch_name(to_check: str):
+    """
+    Asks user to either go ahead with latest batch or enter
+    batch number. Returns empty string for latest batch or
+    "YY-N" (str) for another batch.
+    """
+    pattern = re.compile(
+        r"""       # pattern for entering a batch ID
+                \AB?                # "B" or noyhing at start then 
+                (?P<year>\d{2})     # a two digit number = year
+                -                   # a dash
+                (?P<batch>\d+)      # some numbers = batch_num
+                \Z                  # the end
+                """,
+        flags=re.VERBOSE | re.IGNORECASE,
+    )
+    # the VERBOSE setting ignores whitespace
+    # and allows inline comments
+
+    m = pattern.match(to_check)
+
+    return bool(m)
