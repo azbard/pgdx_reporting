@@ -189,4 +189,7 @@ def check_batch_name(to_check: str):
 
     m = pattern.match(to_check)
 
-    return bool(m)
+    if bool(m):
+        return m.groupdict()
+    else:
+        return None
