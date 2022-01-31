@@ -491,7 +491,7 @@ def write_report(
         html = os.path.join(pathologist_dir, html_filename)
         output_path = os.path.join(igv_dir, igv_filename)
 
-        # make_igvreport(ttype, bam, bed1, bed2, hg19_fasta, html, output_path)
+        make_igvreport(ttype, bam, bed1, bed2, hg19_fasta, html, output_path)
 
     else:
         report_str = (
