@@ -170,9 +170,7 @@ def check_batch_already_run(batch_dir):
 
 def check_batch_name(to_check: str):
     """
-    Asks user to either go ahead with latest batch or enter
-    batch number. Returns empty string for latest batch or
-    "YY-N" (str) for another batch.
+    Check formating of str batch name returns re.match.groupdict() or None
     """
     pattern = re.compile(
         r"""       # pattern for entering a batch ID

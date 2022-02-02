@@ -125,6 +125,14 @@ def tableCreation(
     pgdx_fda_comment_path,
     mode="print",
 ):
+    # Initializes the tables so that if the tables are empty it will not error
+    # but rather not try to upload an empty table.
+    batchTable = None
+    translocationTable = None
+    sampleTable = None
+    cnvTable = None
+    mutTable = None
+    samplehotspotTable = None
 
     # Takes the CID, NA, and Batch from the reportPath
     CID, NA, Batch = caseInfo(reportPath)
@@ -415,40 +423,42 @@ def writeOutputTables(reportPath, tableDicOut, output_dir):
     # loops through dictionary of output tables
     for key in tableDicOut:
 
-        # Creates a path and filename for each sample and its output table
-        sampleFilename = os.path.join(
-            output_dir, CID + "_" + NA + "_" + Batch + "_" + key + "_Upload.csv"
-        )
+        if not tableDicOut[key] is None:
 
-        # For batches it checks if it exists
-        if key == "pgdx_batch" and not os.path.exists(batchFilename):
+            # Creates a path and filename for each sample and its output table
+            sampleFilename = os.path.join(
+                output_dir, CID + "_" + NA + "_" + Batch + "_" + key + "_Upload.csv"
+            )
 
-            # If the batch file does not exist, it will create one
-            with open(batchFilename, "x") as batchFile:
+            # For batches it checks if it exists
+            if key == "pgdx_batch" and not os.path.exists(batchFilename):
 
-                # Transforms the dataframe to a string
-                contents = tableDicOut[key].to_csv(index=False)
+                # If the batch file does not exist, it will create one
+                with open(batchFilename, "x") as batchFile:
 
-                # Writes the string out to the created file
-                batchFile.write(contents)
+                    # Transforms the dataframe to a string
+                    contents = tableDicOut[key].to_csv(index=False)
 
-        # Checks to see if the dataframe is empty as translocation tables can be empty
-        # Also checks to see it is not already created
-        # Lastly checks that it is not the batch table
-        if (
-            not tableDicOut[key].empty
-            and key != "pgdx_batch"
-            and not os.path.exists(sampleFilename)
-        ):
+                    # Writes the string out to the created file
+                    batchFile.write(contents)
 
-            # if those criteria are met, it will create the csv
-            with open(sampleFilename, "x") as sampleFile:
+            # Checks to see if the dataframe is empty as translocation tables can be empty
+            # Also checks to see it is not already created
+            # Lastly checks that it is not the batch table
+            if (
+                not tableDicOut[key].empty
+                and key != "pgdx_batch"
+                and not os.path.exists(sampleFilename)
+            ):
 
-                # Converts dataframe to a string
-                contents = tableDicOut[key].to_csv(index=False)
+                # if those criteria are met, it will create the csv
+                with open(sampleFilename, "x") as sampleFile:
 
-                # Writes the string to created file
-                sampleFile.write(contents)
+                    # Converts dataframe to a string
+                    contents = tableDicOut[key].to_csv(index=False)
+
+                    # Writes the string to created file
+                    sampleFile.write(contents)
 
 
 # Function generates SQL connection
@@ -505,31 +515,32 @@ def uploadToSql(tableDicOut, pgdx_fda_comment_path, mode="print"):
         #     yield msg
 
         try:
-            if not tableDicOut[filetype].empty:
-                # Uses the connection previously created
-                with engine.begin() as connection:
+            if not tableDicOut[filetype] is None:
+                if not tableDicOut[filetype].empty:
+                    # Uses the connection previously created
+                    with engine.begin() as connection:
 
-                    # Finds the corresponding file in the dictionary and appends it to the sql database
-                    # table with the same name
-                    tableDicOut[filetype].to_sql(
-                        filetype,
-                        con=connection,
-                        if_exists="append",
-                        index=False,
-                        schema="pgdx",
-                    )
-                    msg = filetype + " successfully uploaded to sql"
+                        # Finds the corresponding file in the dictionary and appends it to the sql database
+                        # table with the same name
+                        tableDicOut[filetype].to_sql(
+                            filetype,
+                            con=connection,
+                            if_exists="append",
+                            index=False,
+                            schema="pgdx",
+                        )
+                        msg = filetype + " successfully uploaded to sql"
+                        if mode == "print":
+                            print(msg)
+                        # elif mode == "yield":
+                        #     yield msg
+
+                else:
+                    msg = filetype + " empty - not uploaded to sql"
                     if mode == "print":
                         print(msg)
                     # elif mode == "yield":
                     #     yield msg
-
-            else:
-                msg = filetype + " empty - not uploaded to sql"
-                if mode == "print":
-                    print(msg)
-                # elif mode == "yield":
-                #     yield msg
 
         except (Exception, sqlalchemy.exc.DBAPIError) as error:
             msg = filetype + " failed to upload to sql"
