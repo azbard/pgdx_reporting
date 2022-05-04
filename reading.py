@@ -10,12 +10,27 @@ def createExonTable(file):
     ExonDF = pd.read_csv(
         file,
         sep="\t",
-        names=["Chr", "ExonStart", "ExonEnd", "ccds", "unknown", "strand"],
+        names=[
+            "Chr",
+            "ExonStart",
+            "ExonEnd",
+            "ccds",
+            "unknown",
+            "strand",
+        ],
     )
 
     # splits columns to specify start and end location
     ExonDF[
-        ["CCDS", "ExonRepeat", "Exon", "ExonRight", "Chrom", "Bases", "Direction"]
+        [
+            "CCDS",
+            "ExonRepeat",
+            "Exon",
+            "ExonRight",
+            "Chrom",
+            "Bases",
+            "Direction",
+        ]
     ] = ExonDF["ccds"].str.split("_", expand=True)
 
     # drops unnecessary columns
@@ -44,12 +59,16 @@ def parse_csv(fullpath: str):
     # because tables higher in the csv have fewer columns and
     # we need to make sure we import them all
     PGDx_xl_rprt_df = pd.read_csv(
-        fullpath, names=["a", "b", "c", "d", "e", "f", "g", "h", "i"], index_col=False
+        fullpath,
+        names=["a", "b", "c", "d", "e", "f", "g", "h", "i"],
+        index_col=False,
     )
 
     # Create a column which will hold the sub-dataframes' title
     # fill with true if column 'a' contains something in square brackets
-    PGDx_xl_rprt_df["title"] = PGDx_xl_rprt_df["a"].str.contains("\[.+\]")
+    PGDx_xl_rprt_df["title"] = PGDx_xl_rprt_df["a"].str.contains(
+        "\[.+\]"
+    )
 
     # replace title column with column 'a' if true and leave empty
     # otherwise and forward fill with title
@@ -96,30 +115,50 @@ def addExonData(report_dict, ExonDF):
     MutTable = report_dict["Sample Sequence Mutation Analysis"]
 
     # Splits column to seperate out Chromsome, Start, End of the mutation
-    MutTable[["Chromsome", "Location"]] = MutTable["Genomic Location"].str.split(
-        ":", expand=True
-    )
+    MutTable[["Chromsome", "Location"]] = MutTable[
+        "Genomic Location"
+    ].str.split(":", expand=True)
 
-    MutTable[["MutStart", "MutEnd"]] = MutTable["Location"].str.split("-", expand=True)
+    MutTable[["MutStart", "MutEnd"]] = MutTable["Location"].str.split(
+        "-", expand=True
+    )
     MutTable.drop("Location", axis=1, inplace=True)
 
     # Merges with Exon table
     MergedDF = pd.merge(
-        MutTable, ExonDF, how="left", left_on="Transcript", right_on="CCDS"
+        MutTable,
+        ExonDF,
+        how="left",
+        left_on="Transcript",
+        right_on="CCDS",
     )
 
     # checks to see if the mutation falls within the Exon or if not enough data
     FilteredDF = MergedDF[
         (pd.isnull(MergedDF["Chr"]))
         | (
-            (pd.to_numeric(MergedDF["MutStart"]) >= MergedDF["ExonStart"])
-            & (pd.to_numeric(MergedDF["MutEnd"]) <= MergedDF["ExonEnd"])
+            (
+                pd.to_numeric(MergedDF["MutStart"])
+                >= MergedDF["ExonStart"]
+            )
+            & (
+                pd.to_numeric(MergedDF["MutEnd"])
+                <= MergedDF["ExonEnd"]
+            )
         )
     ].copy()
 
     # drops duplicate columns
     FilteredDF.drop(
-        ["Chromsome", "MutStart", "MutEnd", "CCDS", "Chr", "ExonStart", "ExonEnd"],
+        [
+            "Chromsome",
+            "MutStart",
+            "MutEnd",
+            "CCDS",
+            "Chr",
+            "ExonStart",
+            "ExonEnd",
+        ],
         axis=1,
         inplace=True,
     )
@@ -133,7 +172,9 @@ def TMB_MSI(report_dict):
     of TMB and MSI results e.g. {'TMB': '4.6', 'MSI': 'MSS'}
     """
     if "Sample Genomic Signatures" in report_dict.keys():
-        sample_sigs_df = report_dict["Sample Genomic Signatures"].set_index("Signature")
+        sample_sigs_df = report_dict[
+            "Sample Genomic Signatures"
+        ].set_index("Signature")
 
         output_dict = dict()
 
@@ -144,7 +185,9 @@ def TMB_MSI(report_dict):
                 "TMB Muts/Mb (Sequenced)", "Status/Score"
             ]
         except:
-            output_dict["TMB"] = sample_sigs_df.at["TMB Muts/Mb", "Status/Score"]
+            output_dict["TMB"] = sample_sigs_df.at[
+                "TMB Muts/Mb", "Status/Score"
+            ]
 
         output_dict["MSI"] = sample_sigs_df.at[
             "Microsatellite Analysis", "Status/Score"
@@ -190,7 +233,9 @@ def check_K3326_and_up(x):
     parsed_mutation = split_mut_pattern_if_std(x["Amino Acid Change"])
     if pd.isnull(parsed_mutation["first"]):
         out = True
-    elif (parsed_mutation["first"] == "K") & (int(parsed_mutation["codon"]) >= 3326):
+    elif (parsed_mutation["first"] == "K") & (
+        int(parsed_mutation["codon"]) >= 3326
+    ):
         out = False
     else:
         out = True
@@ -220,13 +265,15 @@ def add_link_columns(df0, batch_dir, filename):
             break
 
     macfile = f"/Volumes/PGDx_v1$/ElioConnect_Output/{os.path.basename(batch_dir)}/BAMs/{bam_file}"
-    windowsfile = f"\\\\Smbgpb\pgdx_v1$\ElioConnect_Output\{os.path.basename(batch_dir)}\BAMs\{bam_file}"
+    windowsfile = f"\\\\smbgpb\pgdx_v1\ElioConnect_Output\{os.path.basename(batch_dir)}\BAMs\{bam_file}"
 
     # Splitting columns by delimiter to obtain Chromosome, start and end point
-    df[["Chromosome", "Start-End Point"]] = df["Genomic Location"].str.split(
-        ":", expand=True
-    )
-    df[["Start Point", "End Point"]] = df["Start-End Point"].str.split("-", expand=True)
+    df[["Chromosome", "Start-End Point"]] = df[
+        "Genomic Location"
+    ].str.split(":", expand=True)
+    df[["Start Point", "End Point"]] = df[
+        "Start-End Point"
+    ].str.split("-", expand=True)
 
     # Filling NaN with empty string for string concatention later
     df.fillna(" ", inplace=True)
@@ -290,7 +337,11 @@ def add_link_columns(df0, batch_dir, filename):
     df["IGV: Win"] = WindowsIGV_list
     df["IGV: Mac"] = MacIGV_list
 
-    if ("Tier" in df.columns) and ("Type" in df.columns) and ("Gene" in df.columns):
+    if (
+        ("Tier" in df.columns)
+        and ("Type" in df.columns)
+        and ("Gene" in df.columns)
+    ):
         for col in ["Gene", "Type", "Tier"]:
             mid = df[col]
             df.drop(labels=[col], axis=1, inplace=True)
@@ -303,7 +354,9 @@ def add_link_columns(df0, batch_dir, filename):
     trans = df["Type"] == "Translocation"
     if not df[trans].empty:
         df.loc[trans, "Genomic Location"] = df[trans]["Breakpoint"]
-        df.loc[trans, "Gene"] = df[trans]["Partner"] + "::" + df[trans]["Gene"]
+        df.loc[trans, "Gene"] = (
+            df[trans]["Partner"] + "::" + df[trans]["Gene"]
+        )
 
     max_columns_to_drop = set(
         [
@@ -350,12 +403,12 @@ def METexon14skipping(report_dict):
         return METtable
     else:
         # Splits column to seperate out Chromsome, Start, End of the mutation
-        METtable[["Chromsome", "Location"]] = METtable["Genomic Location"].str.split(
-            ":", expand=True
-        )
-        METtable[["MutStart", "MutEnd"]] = METtable["Location"].str.split(
-            "-", expand=True
-        )
+        METtable[["Chromsome", "Location"]] = METtable[
+            "Genomic Location"
+        ].str.split(":", expand=True)
+        METtable[["MutStart", "MutEnd"]] = METtable[
+            "Location"
+        ].str.split("-", expand=True)
         METtable.drop("Location", axis=1, inplace=True)
 
         # changes columns to integers instead of strings
@@ -382,7 +435,9 @@ def METexon14skipping(report_dict):
         # Makes table of FDA approved targets previously identified and drops all columns used in calculations
         FDAapprovedDF = METtable.loc[METtable["FDA"] == True].copy()
         FDAapprovedDF.drop(
-            ["FDA", "Chromsome", "MutStart", "MutEnd"], axis=1, inplace=True
+            ["FDA", "Chromsome", "MutStart", "MutEnd"],
+            axis=1,
+            inplace=True,
         )
 
         return FDAapprovedDF
@@ -404,9 +459,9 @@ def interp(report_dict, fda, batch_dir, ExonDF, filename):
             - a tier [Tier1-Tier3] and
             - a type [mutation, translocation, amplification, MSI, TMB]
         4) a copy of the report_dict but
-            - with tiers and, 
+            - with tiers and,
             - if Tier ==1, a tier_variant_id for later linking to a comment
-        
+
     """
     # fda_version = fda.at[0, "version"]
 
@@ -453,9 +508,9 @@ def interp(report_dict, fda, batch_dir, ExonDF, filename):
         fda_code = fda_by_type.at["MSI", "tiered_var_id"]
         output_dict["findings"] += [fda_comment]
         msi = "MSI"
-        output_excel["significant_genes"] = output_excel["significant_genes"].append(
-            {"Type": "MSI"}, ignore_index=True
-        )
+        output_excel["significant_genes"] = output_excel[
+            "significant_genes"
+        ].append({"Type": "MSI"}, ignore_index=True)
         row.extend(["1", str(fda_code)])
     else:
         msi = "MSS"
@@ -472,30 +527,49 @@ def interp(report_dict, fda, batch_dir, ExonDF, filename):
         fda_code = fda_by_type.at["TMB", "tiered_var_id"]
         output_dict["findings"] += [fda_comment]
         tmb = "H"
-        output_excel["significant_genes"] = output_excel["significant_genes"].append(
-            {"Type": "TMB-H"}, ignore_index=True
-        )
+        output_excel["significant_genes"] = output_excel[
+            "significant_genes"
+        ].append({"Type": "TMB-H"}, ignore_index=True)
         tier_info = pd.DataFrame(
-            {"tier": ["0", "1"], "tiered_var_id": ["0", fda_code]}, index=[1, 2]
+            {"tier": ["0", "1"], "tiered_var_id": ["0", fda_code]},
+            index=[1, 2],
         )
     else:
         tmb = "L"
         tier_info = pd.DataFrame(
-            {"tier": ["0", "0"], "tiered_var_id": ["0", "0"]}, index=[1, 2]
+            {"tier": ["0", "0"], "tiered_var_id": ["0", "0"]},
+            index=[1, 2],
         )
 
-    to_add = pd.concat([rows, tier_info,], axis=1)
+    to_add = pd.concat(
+        [
+            rows,
+            tier_info,
+        ],
+        axis=1,
+    )
     tiered_dict["Sample Genomic Signatures"] = tiered_dict[
         "Sample Genomic Signatures"
-    ].append(to_add, ignore_index=True,)
+    ].append(
+        to_add,
+        ignore_index=True,
+    )
 
     # Get ttype
     ttype = (
-        report_dict["Case Summary"].set_index("Metric").at["Details", "Value"].upper()
+        report_dict["Case Summary"]
+        .set_index("Metric")
+        .at["Details", "Value"]
+        .upper()
     )
 
     # Initalize
-    list_o_lungs = ["LUNG NSCLC", "LUNG NSCLC-AD", "LUNG NSCLC-LCNEC", "LUNG NSCLC-SQ"]
+    list_o_lungs = [
+        "LUNG NSCLC",
+        "LUNG NSCLC-AD",
+        "LUNG NSCLC-LCNEC",
+        "LUNG NSCLC-SQ",
+    ]
     fda_filt = (fda.ttype == ttype) | (fda.ttype == "Solid Tumor")
     fda_in = fda[fda_filt]
     fda_out = fda[~fda_filt]
@@ -521,7 +595,9 @@ def interp(report_dict, fda, batch_dir, ExonDF, filename):
             # if so and ttype is Lung NSCLC, add to significant genes and findings
             if ttype in list_o_lungs and not met_ex_14_sk.empty:
                 forexcel = met_ex_14_sk.copy()
-                forexcel["Amino Acid Change"] = "MET Exon 14 Splice Site Event"
+                forexcel[
+                    "Amino Acid Change"
+                ] = "MET Exon 14 Splice Site Event"
                 fortiered = met_ex_14_sk.copy()
 
                 output_dict["significant_genes"] += ["MET"]
@@ -545,43 +621,61 @@ def interp(report_dict, fda, batch_dir, ExonDF, filename):
 
                 len_rows, len_cols = fortiered.shape
                 fortiered.insert(len_cols, "tier", len_rows * ["1"])
-                fortiered.insert(len_cols + 1, "tiered_var_id", len_rows * [fda_code])
-                tiered_dict["Sample Sequence Mutation Analysis"] = tiered_dict[
+                fortiered.insert(
+                    len_cols + 1,
+                    "tiered_var_id",
+                    len_rows * [fda_code],
+                )
+                tiered_dict[
                     "Sample Sequence Mutation Analysis"
-                ].append(fortiered, ignore_index=True)
+                ] = tiered_dict[
+                    "Sample Sequence Mutation Analysis"
+                ].append(
+                    fortiered, ignore_index=True
+                )
 
                 #  and remove those rows from further consideration
-                mut_table = pd.concat([mut_table, met_ex_14_sk]).drop_duplicates(
-                    keep=False
-                )
+                mut_table = pd.concat(
+                    [mut_table, met_ex_14_sk]
+                ).drop_duplicates(keep=False)
 
             # if so and other ttype, just add to tier2 genes
             elif ttype not in list_o_lungs and not met_ex_14_sk.empty:
                 forexcel = met_ex_14_sk.copy()
-                forexcel["Amino Acid Change"] = "MET Exon 14 Splice Site Event"
+                forexcel[
+                    "Amino Acid Change"
+                ] = "MET Exon 14 Splice Site Event"
                 output_dict["tier2_genes"] += ["MET"]
-                output_excel["tier2_genes"] = output_excel["tier2_genes"].append(
-                    forexcel, ignore_index=True
-                )
+                output_excel["tier2_genes"] = output_excel[
+                    "tier2_genes"
+                ].append(forexcel, ignore_index=True)
                 fortiered = met_ex_14_sk.copy()
                 len_rows, len_cols = fortiered.shape
                 fortiered.insert(len_cols, "tier", len_rows * ["2"])
-                fortiered.insert(len_cols + 1, "tiered_var_id", len_rows * ["0"])
-
-                tiered_dict["Sample Sequence Mutation Analysis"] = tiered_dict[
-                    "Sample Sequence Mutation Analysis"
-                ].append(fortiered, ignore_index=True)
-                #         #  and remove those rows from further consideration
-                mut_table = pd.concat([mut_table, met_ex_14_sk]).drop_duplicates(
-                    keep=False
+                fortiered.insert(
+                    len_cols + 1, "tiered_var_id", len_rows * ["0"]
                 )
+
+                tiered_dict[
+                    "Sample Sequence Mutation Analysis"
+                ] = tiered_dict[
+                    "Sample Sequence Mutation Analysis"
+                ].append(
+                    fortiered, ignore_index=True
+                )
+                #         #  and remove those rows from further consideration
+                mut_table = pd.concat(
+                    [mut_table, met_ex_14_sk]
+                ).drop_duplicates(keep=False)
     # #############################################################################
 
     #     # Check for main results table aginst fda validated and fda validated for other
     #  ttypes
 
     for correct_ttype, fda_table, key in zip(
-        [True, False], [fda_in, fda_out], ["significant_genes", "tier2_genes"]
+        [True, False],
+        [fda_in, fda_out],
+        ["significant_genes", "tier2_genes"],
     ):
         if not report_dict["Sample Sequence Mutation Analysis"].empty:
 
@@ -589,7 +683,11 @@ def interp(report_dict, fda, batch_dir, ExonDF, filename):
                 #     # Approach here is to mask the fda table in multiple ways
                 #     # 1) does the regular expression match amino acid change?
                 re_mask = fda_table.re.apply(
-                    lambda x: bool(re.search(str(x), str(row["Amino Acid Change"])))
+                    lambda x: bool(
+                        re.search(
+                            str(x), str(row["Amino Acid Change"])
+                        )
+                    )
                 )
 
                 #     # 2) if there's an exon requirement, does it match?
@@ -623,7 +721,13 @@ def interp(report_dict, fda, batch_dir, ExonDF, filename):
                 )
 
                 #   Gather all masks
-                mask = re_mask & exon_mask & gen_mut_mask & conseq_mask & codon_mask
+                mask = (
+                    re_mask
+                    & exon_mask
+                    & gen_mut_mask
+                    & conseq_mask
+                    & codon_mask
+                )
 
                 #     # If there are no matching fda_table approved mutations add the gene
                 #     # to the 'other_genes' list
@@ -636,21 +740,32 @@ def interp(report_dict, fda, batch_dir, ExonDF, filename):
                         ].append(row, ignore_index=True)
 
                         tiered_row = row.append(
-                            pd.Series(["3", "0"], index=["tier", "tiered_var_id"])
+                            pd.Series(
+                                ["3", "0"],
+                                index=["tier", "tiered_var_id"],
+                            )
                         )
-                        tiered_dict["Sample Sequence Mutation Analysis"] = tiered_dict[
+                        tiered_dict[
                             "Sample Sequence Mutation Analysis"
-                        ].append(tiered_row, ignore_index=True)
+                        ] = tiered_dict[
+                            "Sample Sequence Mutation Analysis"
+                        ].append(
+                            tiered_row, ignore_index=True
+                        )
 
                 # if we get a match, add it to the appropriate genes list and if correct ttype,
                 # and add gene and description to the 'findings' list
                 else:
                     output_dict[key] += [row.Gene]
-                    output_excel[key] = output_excel[key].append(row, ignore_index=True)
+                    output_excel[key] = output_excel[key].append(
+                        row, ignore_index=True
+                    )
 
                     if correct_ttype:
                         if row["Amino Acid Change"] == "n/a":
-                            for _, fda_row in fda_table.loc[mask].iterrows():
+                            for _, fda_row in fda_table.loc[
+                                mask
+                            ].iterrows():
                                 output_dict["findings"] += [
                                     row.Gene
                                     + " "
@@ -660,11 +775,15 @@ def interp(report_dict, fda, batch_dir, ExonDF, filename):
                                 ]
                         else:
                             mask3 = (
-                                fda_table.description.apply(lambda x: x[0:3])
+                                fda_table.description.apply(
+                                    lambda x: x[0:3]
+                                )
                                 == row["Amino Acid Change"][0:3]
                             )
                             if not fda_table[mask3].empty:
-                                for _, fda_row in fda_table.loc[mask].iterrows():
+                                for _, fda_row in fda_table.loc[
+                                    mask
+                                ].iterrows():
                                     output_dict["findings"] += [
                                         row.Gene
                                         + " "
@@ -673,7 +792,9 @@ def interp(report_dict, fda, batch_dir, ExonDF, filename):
                                         + fda_row.Interpretation
                                     ]
                             else:
-                                for _, fda_row in fda_table.loc[mask].iterrows():
+                                for _, fda_row in fda_table.loc[
+                                    mask
+                                ].iterrows():
                                     output_dict["findings"] += [
                                         fda_row.gene
                                         + " "
@@ -686,16 +807,26 @@ def interp(report_dict, fda, batch_dir, ExonDF, filename):
                         ].values[0]
                         fda_code = str(fda_code)
                         tiered_row = row.append(
-                            pd.Series(["1", fda_code], index=["tier", "tiered_var_id"])
+                            pd.Series(
+                                ["1", fda_code],
+                                index=["tier", "tiered_var_id"],
+                            )
                         )
                     else:
                         tiered_row = row.append(
-                            pd.Series(["2", "0"], index=["tier", "tiered_var_id"])
+                            pd.Series(
+                                ["2", "0"],
+                                index=["tier", "tiered_var_id"],
+                            )
                         )
 
-                    tiered_dict["Sample Sequence Mutation Analysis"] = tiered_dict[
+                    tiered_dict[
                         "Sample Sequence Mutation Analysis"
-                    ].append(tiered_row, ignore_index=True)
+                    ] = tiered_dict[
+                        "Sample Sequence Mutation Analysis"
+                    ].append(
+                        tiered_row, ignore_index=True
+                    )
 
         # Trans and fusions
         if not report_dict["Sample Translocation Analysis"].empty:
@@ -703,7 +834,12 @@ def interp(report_dict, fda, batch_dir, ExonDF, filename):
             mask = fda_table.mut_type == "Translocation"
             fda_subset = fda_table[mask]
 
-            if "Type" not in report_dict["Sample Translocation Analysis"].columns:
+            if (
+                "Type"
+                not in report_dict[
+                    "Sample Translocation Analysis"
+                ].columns
+            ):
                 report_dict["Sample Translocation Analysis"].insert(
                     0, "Type", "Translocation"
                 )
@@ -720,11 +856,16 @@ def interp(report_dict, fda, batch_dir, ExonDF, filename):
             if not to_add.empty:
                 add_list = (
                     to_add[["Gene", "Partner"]]
-                    .apply(lambda x: x[1] + "::" + x[0] + " " + "Fusion", axis=1)
+                    .apply(
+                        lambda x: x[1] + "::" + x[0] + " " + "Fusion",
+                        axis=1,
+                    )
                     .tolist()
                 )
                 output_dict[key] += add_list
-                output_excel[key] = output_excel[key].append(to_add, ignore_index=True)
+                output_excel[key] = output_excel[key].append(
+                    to_add, ignore_index=True
+                )
                 fortiered = to_add.copy()
                 len_rows, len_cols = fortiered.shape
 
@@ -738,48 +879,84 @@ def interp(report_dict, fda, batch_dir, ExonDF, filename):
                                     f"{row['Partner']}::{row['Gene']} Fusion: {fda_row['Interpretation']}"
                                 )
 
-                    fortiered.insert(len_cols, "tier", len_rows * ["1"])
-                    fortiered.insert(len_cols + 1, "tiered_var_id", len_rows * ["0"])
+                    fortiered.insert(
+                        len_cols, "tier", len_rows * ["1"]
+                    )
+                    fortiered.insert(
+                        len_cols + 1,
+                        "tiered_var_id",
+                        len_rows * ["0"],
+                    )
                     for _, row in fortiered.iterrows():
                         for _, fda_row in fda_subset.iterrows():
                             if (row["Gene"] == fda_row["gene"]) or (
                                 row["Partner"] == fda_row["gene"]
                             ):
-                                row["tiered_var_id"] = fda_row["tiered_var_id"]
-                    tiered_dict["Sample Translocation Analysis"] = tiered_dict[
+                                row["tiered_var_id"] = fda_row[
+                                    "tiered_var_id"
+                                ]
+                    tiered_dict[
                         "Sample Translocation Analysis"
-                    ].append(fortiered, ignore_index=True)
+                    ] = tiered_dict[
+                        "Sample Translocation Analysis"
+                    ].append(
+                        fortiered, ignore_index=True
+                    )
 
                 if key == "tier2_genes":
-                    fortiered.insert(len_cols, "tier", len_rows * ["2"])
-                    fortiered.insert(len_cols + 1, "tiered_var_id", len_rows * ["0"])
-                    tiered_dict["Sample Translocation Analysis"] = tiered_dict[
+                    fortiered.insert(
+                        len_cols, "tier", len_rows * ["2"]
+                    )
+                    fortiered.insert(
+                        len_cols + 1,
+                        "tiered_var_id",
+                        len_rows * ["0"],
+                    )
+                    tiered_dict[
                         "Sample Translocation Analysis"
-                    ].append(fortiered, ignore_index=True)
+                    ] = tiered_dict[
+                        "Sample Translocation Analysis"
+                    ].append(
+                        fortiered, ignore_index=True
+                    )
 
             elif not subset[~mask2].empty:
                 output_dict["other_genes"] += (
                     subset[~mask2][["Gene", "Partner"]]
-                    .apply(lambda x: x[1] + "::" + x[0] + " " + "Fusion", axis=1)
+                    .apply(
+                        lambda x: x[1] + "::" + x[0] + " " + "Fusion",
+                        axis=1,
+                    )
                     .tolist()
                 )
-                output_excel["other_genes"] = output_excel["other_genes"].append(
-                    subset[~mask2], ignore_index=True
-                )
+                output_excel["other_genes"] = output_excel[
+                    "other_genes"
+                ].append(subset[~mask2], ignore_index=True)
                 fortiered = subset[~mask2].copy()
                 len_rows, len_cols = fortiered.shape
                 fortiered.insert(len_cols, "tier", len_rows * ["3"])
-                fortiered.insert(len_cols + 1, "tiered_var_id", len_rows * ["0"])
-                tiered_dict["Sample Translocation Analysis"] = tiered_dict[
+                fortiered.insert(
+                    len_cols + 1, "tiered_var_id", len_rows * ["0"]
+                )
+                tiered_dict[
                     "Sample Translocation Analysis"
-                ].append(fortiered, ignore_index=True)
+                ] = tiered_dict[
+                    "Sample Translocation Analysis"
+                ].append(
+                    fortiered, ignore_index=True
+                )
 
         if not report_dict["Sample Amplification Analysis"].empty:
 
             mask = fda_table.mut_type == "Amplification"
             fda_subset = fda_table[mask]
 
-            if "Type" not in report_dict["Sample Amplification Analysis"].columns:
+            if (
+                "Type"
+                not in report_dict[
+                    "Sample Amplification Analysis"
+                ].columns
+            ):
                 report_dict["Sample Amplification Analysis"].insert(
                     0, "Type", "Amplification"
                 )
@@ -788,22 +965,34 @@ def interp(report_dict, fda, batch_dir, ExonDF, filename):
 
             # for amplification, we need to see Status == "Copy Number Event Detected" or "amplified"
             subset = subset[
-                subset["Status"].isin(["Copy Number Event Detected", "Amplified"])
+                subset["Status"].isin(
+                    ["Copy Number Event Detected", "Amplified"]
+                )
             ]
 
             mask2 = subset["Gene"].isin(fda_subset.gene)
             to_add = subset[mask2]
-            fortiered = tiered_dict["Sample Amplification Analysis"].copy()
+            fortiered = tiered_dict[
+                "Sample Amplification Analysis"
+            ].copy()
 
             if not to_add.empty:
                 output_dict[key] += (
-                    to_add["Gene"].map(lambda x: x + " " + "Amplification").tolist()
+                    to_add["Gene"]
+                    .map(lambda x: x + " " + "Amplification")
+                    .tolist()
                 )
-                output_excel[key] = output_excel[key].append(to_add, ignore_index=True)
+                output_excel[key] = output_excel[key].append(
+                    to_add, ignore_index=True
+                )
             if correct_ttype:
                 mask_amp = fda_subset.gene.isin(subset["Gene"])
-                fda_subdf = fda_subset[mask_amp][["gene", "Interpretation"]].apply(
-                    lambda x: x["gene"] + " Amplification: " + x["Interpretation"],
+                fda_subdf = fda_subset[mask_amp][
+                    ["gene", "Interpretation"]
+                ].apply(
+                    lambda x: x["gene"]
+                    + " Amplification: "
+                    + x["Interpretation"],
                     axis=1,
                 )
                 if len(fda_subdf) != 0:
@@ -816,7 +1005,9 @@ def interp(report_dict, fda, batch_dir, ExonDF, filename):
                                     pd.Series(
                                         {
                                             "tier": "1",
-                                            "tiered_var_id": fda_row["tiered_var_id"],
+                                            "tiered_var_id": fda_row[
+                                                "tiered_var_id"
+                                            ],
                                         }
                                     )
                                 ),
@@ -828,24 +1019,37 @@ def interp(report_dict, fda, batch_dir, ExonDF, filename):
                         if row["Gene"] == fda_row["gene"]:
                             fortiered = fortiered.append(
                                 row.append(
-                                    pd.Series({"tier": "2", "tiered_var_id": "0",})
+                                    pd.Series(
+                                        {
+                                            "tier": "2",
+                                            "tiered_var_id": "0",
+                                        }
+                                    )
                                 ),
                                 ignore_index=True,
                             )
             else:
-                output_dict["other_genes"] += subset["Gene"][~mask2].tolist()
-                output_excel["other_genes"] = output_excel["other_genes"].append(
-                    subset[~mask2], ignore_index=True
-                )
+                output_dict["other_genes"] += subset["Gene"][
+                    ~mask2
+                ].tolist()
+                output_excel["other_genes"] = output_excel[
+                    "other_genes"
+                ].append(subset[~mask2], ignore_index=True)
                 to_add = subset[~mask2].copy()
                 len_rows, len_cols = to_add.shape
                 to_add.insert(len_cols, "tier", len_rows * ["3"])
-                to_add.insert(len_cols + 1, "tiered_var_id", len_rows * ["0"])
-                fortiered = fortiered.append(to_add, ignore_index=True)
+                to_add.insert(
+                    len_cols + 1, "tiered_var_id", len_rows * ["0"]
+                )
+                fortiered = fortiered.append(
+                    to_add, ignore_index=True
+                )
 
-            tiered_dict["Sample Amplification Analysis"] = tiered_dict[
+            tiered_dict[
                 "Sample Amplification Analysis"
-            ].append(fortiered, ignore_index=True)
+            ] = tiered_dict["Sample Amplification Analysis"].append(
+                fortiered, ignore_index=True
+            )
 
     # De-duplicate, remove items in higher tier lits from lower tiers
     # and sort lists
@@ -881,16 +1085,24 @@ def interp(report_dict, fda, batch_dir, ExonDF, filename):
     # allow for custom sort order
     output_excel["Type"] = pd.Categorical(
         output_excel["Type"],
-        ["MSI", "TMB-H", "Mutation", "Translocation", "Amplification", " ", "n/a"],
+        [
+            "MSI",
+            "TMB-H",
+            "Mutation",
+            "Translocation",
+            "Amplification",
+            " ",
+            "n/a",
+        ],
     )
 
     # remove lower tier duplicates
     important_columns = output_excel.columns.tolist()
     important_columns.remove("Tier")
 
-    output_excel = output_excel.sort_values(["Tier", "Type", "Gene"]).drop_duplicates(
-        important_columns, keep="first"
-    )
+    output_excel = output_excel.sort_values(
+        ["Tier", "Type", "Gene"]
+    ).drop_duplicates(important_columns, keep="first")
     # remove lower tier dupes from tiered dfs
     for tbl in [
         "Sample Genomic Signatures",
@@ -901,8 +1113,12 @@ def interp(report_dict, fda, batch_dir, ExonDF, filename):
         important_columns = tiered_dict[tbl].columns.tolist()
         important_columns.remove("tier")
         important_columns.remove("tiered_var_id")
-        cat_tier_order = CategoricalDtype(["1", "2", "3", "0"], ordered=True)
-        tiered_dict[tbl]["tier"] = tiered_dict[tbl]["tier"].astype(cat_tier_order)
+        cat_tier_order = CategoricalDtype(
+            ["1", "2", "3", "0"], ordered=True
+        )
+        tiered_dict[tbl]["tier"] = tiered_dict[tbl]["tier"].astype(
+            cat_tier_order
+        )
         tiered_dict[tbl] = (
             tiered_dict[tbl]
             .sort_values("tier")
@@ -910,7 +1126,9 @@ def interp(report_dict, fda, batch_dir, ExonDF, filename):
         )
         for col in ["type", "exon", "Type", "Exon"]:
             if col in tiered_dict[tbl].columns:
-                tiered_dict[tbl] = tiered_dict[tbl].drop(columns=[col])
+                tiered_dict[tbl] = tiered_dict[tbl].drop(
+                    columns=[col]
+                )
 
     # add tmb and msi to significant genes
     if msi == "MSI":
@@ -939,7 +1157,9 @@ if __name__ == "__main__":
         "/mnt/c/Users/adzab/OneDrive - Mass General Brigham/Operations/PGDx/pgdx-web-app/requirements/refGene-CDS_HG19"
     )
     filename = "testing.html"
-    interped = interp(report_dict, fda_file, batch_dir, ExonDF, filename)
+    interped = interp(
+        report_dict, fda_file, batch_dir, ExonDF, filename
+    )
     for tbl in [
         "Sample Genomic Signatures",
         "Sample Sequence Mutation Analysis",
@@ -947,4 +1167,3 @@ if __name__ == "__main__":
         "Sample Translocation Analysis",
     ]:
         print(interped[3][tbl])
-

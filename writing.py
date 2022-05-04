@@ -20,9 +20,7 @@ def write_summary(interpreted_report_dict, report_dict):
     f = interpreted_report_dict[0]
 
     # Initialize report section with title
-    output_str = (
-        "<p><b>SUMMARY:</b><br>Findings with Evidence of Clinical Significance: "
-    )
+    output_str = "<p><b>SUMMARY:</b><br>Findings with Evidence of Clinical Significance: "
 
     if len(f["significant_genes"]) == 0:
         output_str += "<b>None</b><br>"
@@ -31,9 +29,7 @@ def write_summary(interpreted_report_dict, report_dict):
 
     # Initialize report section with title
 
-    output_str += (
-        "Findings with Evidence of Clinical Significance in Other Tumor Types: "
-    )
+    output_str += "Findings with Evidence of Clinical Significance in Other Tumor Types: "
 
     if len(f["tier2_genes"]) == 0:
         output_str += "<b>None</b><br>"
@@ -154,7 +150,7 @@ def write_amp(interpreted_report_dict):
             if not tier_table.empty:
                 output_str += "<b>" + intro + "</b><br>"
                 for _, row in tier_table.iterrows():
-                    output_str += row["Gene"] + " Amplified<br>"
+                    output_str += row["Gene"] + " Copy Number Gain<br>"
 
     return output_str + "</p>"
 
@@ -201,14 +197,10 @@ def write_trans(interpreted_report_dict):
 
                 for _, row in tier_table.iterrows():
                     # pulls out left fusion and then right fusion by group
-                    chromLocation = re.search(
-                        r"\((.*?)\).*?\((.*?)\)", row["Breakpoint"]
-                    )
+                    chromLocation = re.search(r"\((.*?)\).*?\((.*?)\)", row["Breakpoint"])
 
                     # extracts left breakpoint gene and right breakpoint gene by group
-                    geneNames = re.search(
-                        r"([A-Z0-9]+)\(.*\-(.+)\(.*?", row["Breakpoint"]
-                    )
+                    geneNames = re.search(r"([A-Z0-9]+)\(.*\-(.+)\(.*?", row["Breakpoint"])
 
                     # Prints out in text format
                     output_str += "".join(
@@ -305,8 +297,7 @@ def write_report(
 
     # create report file
     file = open(
-        os.path.join(wiki_dir, case + " - PGDx Report - " + report_datetime + ".txt"),
-        "wb",
+        os.path.join(wiki_dir, case + " - PGDx Report - " + report_datetime + ".txt"), "wb",
     )
 
     msg = log("Starting report: " + case + " - " + report_datetime, log_file,)
@@ -370,15 +361,11 @@ def write_report(
         title = "CID#: {}&nbsp;&nbsp;&nbsp;&nbsp;NA#: {}&nbsp;&nbsp;&nbsp;&nbsp;Batch: {}".format(
             *case.split("_")
         )
-        subtitle = "Report created: " + time.strftime(
-            "%Y-%m-%d %H:%M:%S", time.localtime()
-        )
+        subtitle = "Report created: " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
         cid_num = case.split("_")[0]
 
-        wiki_link = (
-            f"https://cid.mghpathology.org/mediawiki/index.php/{cid_num}#tab=Report"
-        )
+        wiki_link = f"https://cid.mghpathology.org/mediawiki/index.php/{cid_num}#tab=Report"
 
         table = interpreted_report_dict[1].to_html(
             index=False,
@@ -393,9 +380,7 @@ def write_report(
 
         try:
             cnv_table = pd.read_csv(
-                os.path.join(
-                    batch_dir, "TextFiles", case + ".rawfoldchange_ETC-RUO.csv"
-                )
+                os.path.join(batch_dir, "TextFiles", case + ".rawfoldchange_ETC-RUO.csv")
             ).to_html(
                 index=False,
                 justify="center",
@@ -409,9 +394,7 @@ def write_report(
 
         try:
             trans_table = pd.read_csv(
-                os.path.join(
-                    batch_dir, "TextFiles", case + ".translocation_ETC-RUO.csv"
-                )
+                os.path.join(batch_dir, "TextFiles", case + ".translocation_ETC-RUO.csv")
             ).to_html(
                 index=False,
                 justify="center",
@@ -424,11 +407,7 @@ def write_report(
             trans_table = "No Translocation table found."
 
         ttype = (
-            report_dict["Case Summary"]
-            .set_index("Metric")
-            .at["Details", "Value"]
-            .lower()
-            .title()
+            report_dict["Case Summary"].set_index("Metric").at["Details", "Value"].lower().title()
         )
 
         sample_sigs = TMB_MSI(report_dict)
@@ -525,8 +504,7 @@ def fail(
 
     # create report file
     file = open(
-        os.path.join(wiki_dir, case + " - PGDx Report - " + report_datetime + ".txt"),
-        "wb",
+        os.path.join(wiki_dir, case + " - PGDx Report - " + report_datetime + ".txt"), "wb",
     )
 
     report_str = (

@@ -473,7 +473,8 @@ def connectToDatabase(mode="print"):
         # elif mode == "yield":
         #     yield msg
         engine = create_engine(
-            "postgresql://sv739:cpath%40mgh@172.27.81.127:31644/cider"
+           # "postgresql://sv739:cpath%40mgh@172.27.81.127:31644/cider"
+           'postgresql+psycopg2://sv739:cpath%40mgh@172.27.81.124:32503/sandbox'
         )
 
     except (Exception, sqlalchemy.exc.DatabaseError) as error:

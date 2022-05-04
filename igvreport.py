@@ -1,7 +1,7 @@
 # %%
 import subprocess as sp
 import pandas as pd
-from igv_reports.report import run as create_igv_html
+from .igv_reports.report import run as create_igv_html
 
 # %%
 
@@ -30,11 +30,7 @@ def make_igvreport(ttype, bam, bed1, bed2, hg19_fasta, html, output_path):
         df[["start", "end"]] = df["coordinates"].str.split("-", expand=True)
         df["chr"] = df["chr"] + ".fa"
         df = df.rename(
-            columns={
-                "Amino Acid Change": "aminoacid",
-                "Tier": "desc",
-                "MAF (%)": "maf%",
-            }
+            columns={"Amino Acid Change": "aminoacid", "Tier": "desc", "MAF (%)": "maf%",}
         )
         df["exon"] = "-"
         df["disease"] = ttype
